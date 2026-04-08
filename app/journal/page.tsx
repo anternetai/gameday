@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
@@ -24,6 +24,14 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export default function JournalPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <JournalPageInner />
+    </Suspense>
+  )
+}
+
+function JournalPageInner() {
   const searchParams = useSearchParams()
   const today = getLocalDate(0)
   const [selectedDate, setSelectedDate] = useState(searchParams.get("date") ?? today)
