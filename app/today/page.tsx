@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeft, ChevronRight, Plus, Zap, Flame } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Zap, Flame, CalendarDays, ChevronDown, Settings } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { TaskList, type Task } from "@/components/task-list"
 import { RingProgress } from "@/components/ring-progress"
@@ -9,6 +10,8 @@ import { WeekStrip } from "@/components/week-strip"
 import { AddTaskBar } from "@/components/add-task-bar"
 import { JournalPanel } from "@/components/journal-panel"
 import { DayComplete } from "@/components/day-complete"
+import { DailyTimeline, type CalendarEvent } from "@/components/daily-timeline"
+import { ContextPanel } from "@/components/context-panel"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +99,10 @@ export default function TodayPage() {
   const [showDayComplete, setShowDayComplete] = useState(false)
   const [showAddTask, setShowAddTask] = useState(false)
 
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [calendarConnected, setCalendarConnected] = useState(false)
+  const [timelineOpen, setTimelineOpen] = useState(false)
+
   // ── Fetch tasks for selected date ──────────────────────────────────────────
   const fetchTasks = useCallback(async (date: string) => {
     setTasksLoading(true)
@@ -107,6 +114,19 @@ export default function TodayPage() {
       setTasks([])
     } finally {
       setTasksLoading(false)
+    }
+  }, [])
+
+  // ── Fetch calendar events ──────────────────────────────────────────────────
+  const fetchCalendarEvents = useCallback(async (date: string) => {
+    try {
+      const res = await fetch(`/api/calendar/events?date=${date}`)
+      const data = await res.json()
+      setCalendarEvents(data.events ?? [])
+      setCalendarConnected(data.connected ?? false)
+    } catch {
+      setCalendarEvents([])
+      setCalendarConnected(false)
     }
   }, [])
 
@@ -126,7 +146,8 @@ export default function TodayPage() {
 
   useEffect(() => {
     fetchTasks(selectedDate)
-  }, [selectedDate, fetchTasks])
+    fetchCalendarEvents(selectedDate)
+  }, [selectedDate, fetchTasks, fetchCalendarEvents])
 
   useEffect(() => {
     fetchStats()
@@ -220,19 +241,30 @@ export default function TodayPage() {
             </button>
           </div>
 
-          {/* Add task button */}
-          <button
-            onClick={() => setShowAddTask((v) => !v)}
-            className={cn(
-              "flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all duration-150",
-              showAddTask
-                ? "bg-orange-500 text-white"
-                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
-            )}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Add task</span>
-          </button>
+          {/* Right header actions */}
+          <div className="flex items-center gap-2">
+            {/* Settings */}
+            <Link
+              href="/settings"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+
+            {/* Add task button */}
+            <button
+              onClick={() => setShowAddTask((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all duration-150",
+                showAddTask
+                  ? "bg-orange-500 text-white"
+                  : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+              )}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Add task</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -240,8 +272,16 @@ export default function TodayPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start">
 
-          {/* ── Left column: tasks ─────────────────────────────────────────── */}
+          {/* ── Left column: tasks + timeline ─────────────────────────────── */}
           <div className="flex flex-col gap-4">
+
+            {/* AI Context Panel — morning brief + task suggestions */}
+            {isToday && (
+              <ContextPanel
+                date={selectedDate}
+                onTaskAdded={() => fetchTasks(selectedDate)}
+              />
+            )}
 
             {/* Progress card */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 flex items-center gap-4">
@@ -307,6 +347,58 @@ export default function TodayPage() {
                   taskDate={selectedDate}
                 />
               </div>
+            </div>
+
+            {/* ── Timeline: desktop always visible, mobile collapsible ──────── */}
+            {/* Desktop: rendered inline in left column */}
+            <div className="hidden lg:block rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-zinc-800/60">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-3.5 h-3.5 text-zinc-500" />
+                  <h2 className="text-sm font-semibold text-zinc-300">Timeline</h2>
+                </div>
+                {calendarConnected && (
+                  <span className="text-[10px] text-emerald-500/70">Calendar synced</span>
+                )}
+              </div>
+              <DailyTimeline
+                events={calendarEvents}
+                tasks={tasks}
+                currentDate={selectedDate}
+                calendarConnected={calendarConnected}
+              />
+            </div>
+
+            {/* Mobile: collapsible */}
+            <div className="lg:hidden rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+              <button
+                onClick={() => setTimelineOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-3.5 h-3.5 text-zinc-500" />
+                  <span className="text-sm font-semibold text-zinc-300">Timeline</span>
+                  {calendarConnected && (
+                    <span className="text-[10px] text-emerald-500/70">synced</span>
+                  )}
+                </div>
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 text-zinc-500 transition-transform duration-200",
+                    timelineOpen && "rotate-180"
+                  )}
+                />
+              </button>
+              {timelineOpen && (
+                <div className="border-t border-zinc-800/60">
+                  <DailyTimeline
+                    events={calendarEvents}
+                    tasks={tasks}
+                    currentDate={selectedDate}
+                    calendarConnected={calendarConnected}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
