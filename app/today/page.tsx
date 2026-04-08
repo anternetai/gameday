@@ -8,7 +8,7 @@ import { TaskList, type Task } from "@/components/task-list"
 import { RingProgress } from "@/components/ring-progress"
 import { WeekStrip } from "@/components/week-strip"
 import { AddTaskBar } from "@/components/add-task-bar"
-import { JournalPanel } from "@/components/journal-panel"
+import { BookOpen } from "lucide-react"
 import { DayComplete } from "@/components/day-complete"
 import { DailyTimeline, type CalendarEvent } from "@/components/daily-timeline"
 import { ContextPanel } from "@/components/context-panel"
@@ -247,13 +247,14 @@ export default function TodayPage() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-20 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Logo + title */}
-          <div className="flex items-center gap-2.5">
+          {/* Logo + title — mobile only (sidebar has it on desktop) */}
+          <div className="flex items-center gap-2.5 lg:hidden">
             <div className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
               <Zap className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-base tracking-tight">Game Day</span>
           </div>
+          <div className="hidden lg:block" /> {/* Spacer on desktop */}
 
           {/* Day navigation */}
           <div className="flex items-center gap-2">
@@ -287,10 +288,10 @@ export default function TodayPage() {
 
           {/* Right header actions */}
           <div className="flex items-center gap-2">
-            {/* Settings */}
+            {/* Settings — mobile only */}
             <Link
               href="/settings"
-              className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="lg:hidden w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               <Settings className="w-4 h-4" />
             </Link>
@@ -476,10 +477,20 @@ export default function TodayPage() {
               )}
             </div>
 
-            {/* Journal */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <JournalPanel date={selectedDate} />
-            </div>
+            {/* Journal link */}
+            <Link
+              href={`/journal?date=${selectedDate}`}
+              className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 flex items-center gap-3 hover:bg-zinc-800/50 transition-colors group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4 text-violet-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-zinc-300 group-hover:text-white transition-colors">Journal</p>
+                <p className="text-xs text-zinc-500">Write about your day</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 ml-auto" />
+            </Link>
           </div>
         </div>
       </main>
