@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import {
   DragDropContext,
   Droppable,
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd"
-import { GripVertical, Trash2, Star } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
+import { GripVertical, Trash2, Star, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface Task {
@@ -221,9 +222,12 @@ interface TaskListProps {
   tasks: Task[]
   onTasksChange: (tasks: Task[]) => void
   onAllComplete?: () => void
+  onAddTask?: () => void
 }
 
-export function TaskList({ tasks, onTasksChange, onAllComplete }: TaskListProps) {
+export function TaskList({ tasks, onTasksChange, onAllComplete, onAddTask }: TaskListProps) {
+  const [isDragging, setIsDragging] = useState(false)
+
   // Sort: uncompleted first by sort_order, completed at bottom
   const sorted = [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1
@@ -281,7 +285,13 @@ export function TaskList({ tasks, onTasksChange, onAllComplete }: TaskListProps)
     }
   }
 
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true)
+  }, [])
+
   async function handleDragEnd(result: DropResult) {
+    setIsDragging(false)
+
     if (!result.destination) return
     const { source, destination } = result
     if (source.index === destination.index) return
@@ -308,18 +318,31 @@ export function TaskList({ tasks, onTasksChange, onAllComplete }: TaskListProps)
 
   if (sorted.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
-          <Star className="w-5 h-5 text-zinc-600" />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="flex flex-col items-center justify-center py-12 text-center"
+      >
+        <div className="w-14 h-14 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center mb-4">
+          <Target className="w-6 h-6 text-zinc-500" />
         </div>
-        <p className="text-sm text-zinc-500">No tasks for today</p>
-        <p className="text-xs text-zinc-700 mt-1">Add one below to get started</p>
-      </div>
+        <p className="text-sm font-semibold text-zinc-400 mb-1">No tasks yet</p>
+        <p className="text-xs text-zinc-600 mb-4">Set your targets for the day</p>
+        {onAddTask && (
+          <button
+            onClick={onAddTask}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20 transition-colors"
+          >
+            Add your first task
+          </button>
+        )}
+      </motion.div>
     )
   }
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Droppable droppableId="task-list">
         {(provided) => (
           <div
@@ -327,16 +350,26 @@ export function TaskList({ tasks, onTasksChange, onAllComplete }: TaskListProps)
             {...provided.droppableProps}
             className="flex flex-col gap-1.5"
           >
-            {sorted.map((task, index) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                index={index}
-                onToggle={handleToggle}
-                onDelete={handleDelete}
-                onRename={handleRename}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {sorted.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.96, transition: { duration: 0.18 } }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  layout={!isDragging}
+                >
+                  <TaskRow
+                    task={task}
+                    index={index}
+                    onToggle={handleToggle}
+                    onDelete={handleDelete}
+                    onRename={handleRename}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
             {provided.placeholder}
           </div>
         )}

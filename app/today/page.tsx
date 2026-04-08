@@ -12,6 +12,8 @@ import { JournalPanel } from "@/components/journal-panel"
 import { DayComplete } from "@/components/day-complete"
 import { DailyTimeline, type CalendarEvent } from "@/components/daily-timeline"
 import { ContextPanel } from "@/components/context-panel"
+import { MobileNav } from "@/components/mobile-nav"
+import { LoadingSkeleton } from "@/components/loading-skeleton"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -153,6 +155,45 @@ export default function TodayPage() {
     fetchStats()
   }, [fetchStats])
 
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Ignore when typing in inputs / textareas
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        // Escape still works to close open state
+        if (e.key === "Escape") {
+          setShowAddTask(false)
+          setShowDayComplete(false)
+        }
+        return
+      }
+
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault()
+        setShowAddTask((v) => !v)
+      }
+
+      if (e.key === "Escape") {
+        setShowAddTask(false)
+        setShowDayComplete(false)
+      }
+
+      if (e.key === "r" || e.key === "R") {
+        e.preventDefault()
+        fetchTasks(selectedDate)
+        fetchStats()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [selectedDate, fetchTasks, fetchStats])
+
   // ── Computed stats ─────────────────────────────────────────────────────────
   const completedTasks = tasks.filter((t) => t.completed)
   const totalTasks = tasks.length
@@ -197,6 +238,9 @@ export default function TodayPage() {
   }
 
   const isToday = selectedDate === today
+
+  // Show full-page skeleton on very first load (both tasks and stats still loading)
+  const initialLoading = tasksLoading && statsLoading
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -269,7 +313,10 @@ export default function TodayPage() {
       </header>
 
       {/* ── Main grid ──────────────────────────────────────────────────────── */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
+      {initialLoading ? (
+        <LoadingSkeleton />
+      ) : null}
+      <main className={cn("max-w-5xl mx-auto px-4 sm:px-6 py-6 lg:py-8 pb-20 lg:pb-8", initialLoading && "hidden")}>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start">
 
           {/* ── Left column: tasks + timeline ─────────────────────────────── */}
@@ -337,6 +384,7 @@ export default function TodayPage() {
                   tasks={tasks}
                   onTasksChange={handleTasksChange}
                   onAllComplete={handleAllComplete}
+                  onAddTask={() => setShowAddTask(true)}
                 />
               )}
 
@@ -443,6 +491,9 @@ export default function TodayPage() {
           onDismiss={() => setShowDayComplete(false)}
         />
       )}
+
+      {/* ── Mobile bottom nav ─────────────────────────────────────────────── */}
+      <MobileNav />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Calendar, CheckCircle2, ChevronRight, Layers, Tag, Zap } from "lucide-react"
 import Link from "next/link"
+import { MobileNav } from "@/components/mobile-nav"
 
 interface CalendarStatus {
   connected: boolean
@@ -82,7 +83,7 @@ function SettingsContent() {
       )}
 
       {/* Content */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-24 lg:pb-6 flex flex-col gap-6">
 
         {/* ── Google Calendar ──────────────────────────────────────────────── */}
         <section>
@@ -162,6 +163,8 @@ function SettingsContent() {
         </section>
 
       </main>
+      {/* ── Mobile bottom nav ─────────────────────────────────────────────── */}
+      <MobileNav />
     </div>
   )
 }
