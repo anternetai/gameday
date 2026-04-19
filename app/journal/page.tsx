@@ -7,6 +7,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { JournalPanel } from "@/components/journal-panel"
 import { SeedsPanel } from "@/components/seeds-panel"
+import { ObsidianExport } from "@/components/obsidian-export"
 import { MobileNav } from "@/components/mobile-nav"
 
 function getLocalDate(offset = 0): string {
@@ -101,6 +102,9 @@ function JournalPageInner() {
         </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 mt-4">
           <SeedsPanel date={selectedDate} />
+        </div>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 mt-4">
+          <ObsidianExport date={selectedDate} />
         </div>
       </main>
 
