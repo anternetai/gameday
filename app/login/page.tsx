@@ -18,6 +18,22 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
+    if (email.trim() === "") {
+      const res = await fetch("/api/auth/passphrase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passphrase: password }),
+      })
+      if (!res.ok) {
+        setError("Invalid credentials")
+        setLoading(false)
+        return
+      }
+      router.push("/today")
+      router.refresh()
+      return
+    }
+
     const supabase = createClient()
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -56,7 +72,6 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
