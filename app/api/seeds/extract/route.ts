@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getAnthropic, HAIKU_MODEL } from "@/lib/anthropic"
+import { chat } from "@/lib/llm"
 
 const FALLBACK_USER_ID = "bba79829-7852-4f81-aa2e-393650138e7c"
 
@@ -78,24 +78,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const anthropic = getAnthropic()
-    const completion = await anthropic.messages.create({
-      model: HAIKU_MODEL,
-      max_tokens: 2000,
+    const raw = await chat({
       system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Here is today's writing (${entryDate}). Extract content seeds as specified.\n\n---\n\n${text}`,
-        },
-      ],
+      user: `Here is today's writing (${entryDate}). Extract content seeds as specified.\n\n---\n\n${text}`,
+      maxTokens: 2000,
+      responseFormat: "json_object",
     })
-
-    const raw = completion.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b.type === "text" ? b.text : ""))
-      .join("\n")
-      .trim()
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {

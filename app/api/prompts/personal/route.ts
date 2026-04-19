@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getAnthropic, HAIKU_MODEL } from "@/lib/anthropic"
+import { chat } from "@/lib/llm"
 
 const FALLBACK_USER_ID = "bba79829-7852-4f81-aa2e-393650138e7c"
 
@@ -57,23 +57,14 @@ export async function POST(request: NextRequest) {
           .slice(0, 4000)}`
       : ""
 
-    const anthropic = getAnthropic()
-    const completion = await anthropic.messages.create({
-      model: HAIKU_MODEL,
-      max_tokens: 200,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Generate today's prompt.${context || "\n\n(No recent entries to mine — pick something sharp and specific to a founder/creator's week.)"}`,
-        },
-      ],
-    })
-
-    const text = completion.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b.type === "text" ? b.text : ""))
-      .join("")
+    const text = (
+      await chat({
+        system: SYSTEM_PROMPT,
+        user: `Generate today's prompt.${context || "\n\n(No recent entries to mine — pick something sharp and specific to a founder/creator's week.)"}`,
+        maxTokens: 200,
+        temperature: 0.85,
+      })
+    )
       .trim()
       .replace(/^["'\u201C\u201D]|["'\u201C\u201D]$/g, "")
 
