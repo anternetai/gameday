@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { JournalPanel } from "@/components/journal-panel"
 import { SeedsPanel } from "@/components/seeds-panel"
 import { ObsidianExport } from "@/components/obsidian-export"
+import { DailyPrompt } from "@/components/daily-prompt"
 import { MobileNav } from "@/components/mobile-nav"
 
 function getLocalDate(offset = 0): string {
@@ -96,6 +97,9 @@ function JournalPageInner() {
             <Focus className="w-4 h-4" />
             <span>Focus session</span>
           </Link>
+        </div>
+        <div className="mb-4">
+          <DailyPrompt date={selectedDate} />
         </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
           <JournalPanel date={selectedDate} />

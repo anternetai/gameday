@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { X, Play, Pause, RotateCcw, Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DailyPrompt } from "@/components/daily-prompt"
 
 interface FocusWriterProps {
   date: string
@@ -358,7 +359,8 @@ export function FocusWriter({ date }: FocusWriterProps) {
 
       {/* Writing canvas */}
       <main className="flex-1 overflow-y-auto flex justify-center">
-        <div className="w-full max-w-3xl px-6 sm:px-10 py-8 sm:py-14 flex flex-col">
+        <div className="w-full max-w-3xl px-6 sm:px-10 py-8 sm:py-14 flex flex-col gap-4">
+          <DailyPrompt date={date} variant="focus" />
           <textarea
             ref={textareaRef}
             value={text}
@@ -374,7 +376,7 @@ export function FocusWriter({ date }: FocusWriterProps) {
               "font-serif",
               !loaded && "opacity-50"
             )}
-            style={{ minHeight: "calc(100vh - 180px)" }}
+            style={{ minHeight: "calc(100vh - 260px)" }}
           />
         </div>
       </main>
