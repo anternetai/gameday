@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { X, Play, Pause, RotateCcw, Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DailyPrompt } from "@/components/daily-prompt"
+import { VoiceInput } from "@/components/voice-input"
 
 interface FocusWriterProps {
   date: string
@@ -196,6 +197,35 @@ export function FocusWriter({ date }: FocusWriterProps) {
     setTimer({ kind: "idle" })
   }
 
+  function insertTranscribed(transcribed: string) {
+    const ta = textareaRef.current
+    const addition = transcribed.trim()
+    if (!addition) return
+
+    setText((prev) => {
+      const start = ta?.selectionStart ?? prev.length
+      const end = ta?.selectionEnd ?? prev.length
+      const before = prev.slice(0, start)
+      const after = prev.slice(end)
+      const needsSpaceBefore = before.length > 0 && !/\s$/.test(before)
+      const needsSpaceAfter = after.length > 0 && !/^\s/.test(after)
+      const insert =
+        (needsSpaceBefore ? " " : "") +
+        addition +
+        (needsSpaceAfter ? " " : "")
+      const next = before + insert + after
+
+      requestAnimationFrame(() => {
+        if (!ta) return
+        const caret = before.length + insert.length
+        ta.focus()
+        ta.setSelectionRange(caret, caret)
+      })
+
+      return next
+    })
+  }
+
   function exitBrowserFullscreen() {
     if (document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen().catch(() => {
@@ -381,11 +411,11 @@ export function FocusWriter({ date }: FocusWriterProps) {
         </div>
       </main>
 
-      {/* Bottom bar — word count only, dead simple */}
-      <footer className="h-10 px-6 flex items-center justify-between shrink-0 text-[11px] text-zinc-700 font-mono tabular-nums">
+      {/* Bottom bar — word count + voice */}
+      <footer className="h-14 px-6 flex items-center justify-between shrink-0 text-[11px] text-zinc-700 font-mono tabular-nums">
         <span>{words} {words === 1 ? "word" : "words"}</span>
         <span className="hidden sm:inline">Esc to exit · autosaves</span>
-        <span />
+        <VoiceInput onTranscribed={insertTranscribed} disabled={!loaded} />
       </footer>
 
       {/* Exit confirm */}
