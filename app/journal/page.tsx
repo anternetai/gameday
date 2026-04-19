@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Focus } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { JournalPanel } from "@/components/journal-panel"
@@ -81,7 +81,20 @@ function JournalPageInner() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-xl font-bold mb-6">Journal</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-bold">Journal</h1>
+          <Link
+            href={`/journal/focus?date=${selectedDate}`}
+            className={cn(
+              "group flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all duration-150",
+              "bg-orange-500 text-white hover:bg-orange-600",
+              "shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+            )}
+          >
+            <Focus className="w-4 h-4" />
+            <span>Focus session</span>
+          </Link>
+        </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
           <JournalPanel date={selectedDate} />
         </div>
