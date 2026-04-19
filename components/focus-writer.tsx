@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { X, Play, Pause, RotateCcw } from "lucide-react"
+import { X, Play, Pause, RotateCcw, Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface FocusWriterProps {
@@ -143,6 +143,18 @@ export function FocusWriter({ date }: FocusWriterProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer.kind])
 
+  function enterBrowserFullscreen() {
+    const el = document.documentElement
+    if (
+      !document.fullscreenElement &&
+      typeof el.requestFullscreen === "function"
+    ) {
+      el.requestFullscreen().catch(() => {
+        /* user denied or unsupported — fixed inset-0 still covers viewport */
+      })
+    }
+  }
+
   function startTimer(minutes: number) {
     const totalSec = minutes * 60
     setTimer({
@@ -151,6 +163,7 @@ export function FocusWriter({ date }: FocusWriterProps) {
       totalSec,
       remainingSec: totalSec,
     })
+    enterBrowserFullscreen()
     textareaRef.current?.focus()
   }
 
@@ -182,6 +195,14 @@ export function FocusWriter({ date }: FocusWriterProps) {
     setTimer({ kind: "idle" })
   }
 
+  function exitBrowserFullscreen() {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {
+        /* noop */
+      })
+    }
+  }
+
   async function handleExit() {
     if (timer.kind === "running") {
       setShowExitConfirm(true)
@@ -190,6 +211,7 @@ export function FocusWriter({ date }: FocusWriterProps) {
     if (text !== lastSaved.current) {
       await save(text)
     }
+    exitBrowserFullscreen()
     router.push(`/journal?date=${date}`)
   }
 
@@ -197,6 +219,7 @@ export function FocusWriter({ date }: FocusWriterProps) {
     if (text !== lastSaved.current) {
       await save(text)
     }
+    exitBrowserFullscreen()
     router.push(`/journal?date=${date}`)
   }
 
@@ -217,7 +240,7 @@ export function FocusWriter({ date }: FocusWriterProps) {
       : 0
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 flex flex-col text-white">
+    <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col text-white">
       {/* Subtle progress bar — full width, top edge */}
       {(isTimerActive || isDone) && (
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-900 z-10">
@@ -257,6 +280,14 @@ export function FocusWriter({ date }: FocusWriterProps) {
                   {m}m
                 </button>
               ))}
+              <button
+                onClick={enterBrowserFullscreen}
+                className="ml-1 w-7 h-7 flex items-center justify-center rounded-md text-zinc-600 hover:text-white hover:bg-zinc-900 transition-colors"
+                aria-label="Fullscreen"
+                title="Fullscreen"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
           {timer.kind === "running" && (

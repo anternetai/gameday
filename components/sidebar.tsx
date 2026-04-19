@@ -14,8 +14,9 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname()
 
-  // Don't show sidebar on login page
+  // Don't show sidebar on login page or focus writer
   if (pathname === "/login") return null
+  if (pathname.startsWith("/journal/focus")) return null
 
   return (
     <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r border-zinc-800/60 bg-zinc-950 h-screen sticky top-0">
